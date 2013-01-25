@@ -51,9 +51,10 @@ public class MainActivity extends Activity {
         private final String TAG_TASK = RecorderTask.class.getSimpleName();
 
         private final ByteBuffer pcmBuffer;
+        private final int bufferSize = mRecorder.getBufferSize();
 
         RecorderTask() {
-            pcmBuffer = ByteBuffer.allocate(mRecorder.getBufferSize());
+            pcmBuffer = ByteBuffer.allocateDirect(bufferSize);
             pcmBuffer.order(ByteOrder.LITTLE_ENDIAN);
         }
 
@@ -64,15 +65,13 @@ public class MainActivity extends Activity {
             android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_AUDIO);
             mRecording = true;
 
-            byte[] buffer = pcmBuffer.array();
-
             mRecorder.startRecording();
             Thread myThread = Thread.currentThread();
 
             try {
                 while (!myThread.isInterrupted()) {
                     // Read PCM data from recorder
-                    int readSize = mRecorder.read(buffer, 0, buffer.length);
+                    int readSize = mRecorder.read(pcmBuffer, bufferSize);
                     if (readSize < 0) {
                         Log.e(TAG_TASK, "read error : " + readSize);
                         break;
