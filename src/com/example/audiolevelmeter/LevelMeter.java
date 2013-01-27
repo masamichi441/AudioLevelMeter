@@ -5,13 +5,14 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 final class LevelMeter extends LinearLayout {
     private static final String TAG = LevelMeter.class.getSimpleName();
 
-    static final int NUM_ELEMENTS = 10;
+    static final int NUM_ELEMENTS = 20;
     private final Segment[] segment = new Segment[NUM_ELEMENTS];
 
     private volatile int mLevel = 0;
@@ -29,7 +30,7 @@ final class LevelMeter extends LinearLayout {
         }
     }
 
-    private static final int LEVEL0_SHIFT = 20;	// -20db = level 0
+    private static final int LEVEL0_SHIFT = 30;	// -30db = level 0
 
     void setLevel(int amplitude) {
 
@@ -38,8 +39,6 @@ final class LevelMeter extends LinearLayout {
         double db = 20.0 * Math.log10(normalizedLevel);
         int level = (int) ((db + LEVEL0_SHIFT) / (LEVEL0_SHIFT / NUM_ELEMENTS));
 
-//        Log.d(TAG, "level=" + level);
-
         // Valid range is 0 to NUM_ELEMENTS (NUM_ELEMENTS + 1 levels).
         if (level < 0) {
             level = 0;
@@ -47,13 +46,18 @@ final class LevelMeter extends LinearLayout {
             level = NUM_ELEMENTS;
         }
 
+        Log.d(TAG, "amp=" + amplitude + " level=" + level);
+
         mLevel = level;
 
         // For in case called from non-UI thread, instead of invalidate()
-        postInvalidate();
+        //postInvalidate();
+        for (Segment seg : segment) {
+            seg.postInvalidate();
+        }
     }
 
-    private static final int WIDTH  = 20;
+    private static final int WIDTH  = 9;
     private static final int HEIGHT = 20;
 
     private static final int ON_COLOR  = Color.GREEN;
@@ -61,12 +65,12 @@ final class LevelMeter extends LinearLayout {
 
     // One segment of level meter
     private class Segment extends ImageView {
-        private final int mIndex;
+        private final int mLevelIndex;
 
         public Segment(Context context, int index) {
             super(context);
 
-            mIndex = index;
+            mLevelIndex = index;
             setMinimumWidth(WIDTH);
             setMinimumHeight(HEIGHT);
         }
@@ -79,7 +83,7 @@ final class LevelMeter extends LinearLayout {
 
         @Override
         protected void onDraw(Canvas canvas) {
-            if (mIndex + 1 <= mLevel) {
+            if (mLevelIndex + 1 <= mLevel) {
                 canvas.drawColor(ON_COLOR);
             } else {
                 canvas.drawColor(OFF_COLOR);
